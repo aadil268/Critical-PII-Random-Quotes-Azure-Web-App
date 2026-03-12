@@ -6,7 +6,9 @@ This project provisions and deploys a **public** Python web application in Azure
 
 ## Demo URL
 
-https://web-s-quotes-prod-nhxyaq-ejgpaudjhfbxfsff.westus3-01.azurewebsites.net/
+1. https://quotes.aadilabbasi.com/
+
+2. https://web-s-quotes-prod-nhxyaq-ejgpaudjhfbxfsff.westus3-01.azurewebsites.net/
 
 ## Critical PII Random Quotes Web App Architecture
 <img src="Critical PII Random Quotes Web App .drawio.png" alt="Critical PII Random Quotes Web App Architecture">
