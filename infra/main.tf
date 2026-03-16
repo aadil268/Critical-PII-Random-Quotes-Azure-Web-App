@@ -195,6 +195,7 @@ resource "azurerm_network_security_group" "primary_app" {
   }
 }
 
+# Applies NSGs to the primary private-endpoint subnet to secure private link connectivity for PaaS services.
 resource "azurerm_network_security_group" "primary_private_endpoint" {
   name                = "nsg-p-pe-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
   location            = var.primary_location
@@ -250,6 +251,7 @@ resource "azurerm_network_security_group" "primary_private_endpoint" {
   }
 }
 
+# Applies NSGs to the secondary app subnet to secure app traffic within the VNet.
 resource "azurerm_network_security_group" "secondary_app" {
   name                = "nsg-s-app-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
   location            = var.secondary_location
@@ -305,6 +307,7 @@ resource "azurerm_network_security_group" "secondary_app" {
   }
 }
 
+# Applies NSGs to the secondary private-endpoint subnet to secure private link connectivity for PaaS services.
 resource "azurerm_network_security_group" "secondary_private_endpoint" {
   name                = "nsg-s-pe-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
   location            = var.secondary_location
@@ -360,21 +363,25 @@ resource "azurerm_network_security_group" "secondary_private_endpoint" {
   }
 }
 
+# Associates the NSGs with the subnets to apply the security rules to the subnets.
 resource "azurerm_subnet_network_security_group_association" "primary_app" {
   subnet_id                 = azurerm_subnet.primary_app.id
   network_security_group_id = azurerm_network_security_group.primary_app.id
 }
 
+# Associates the NSGs with the subnets to apply the security rules to the subnets.
 resource "azurerm_subnet_network_security_group_association" "primary_private_endpoint" {
   subnet_id                 = azurerm_subnet.primary_private_endpoint.id
   network_security_group_id = azurerm_network_security_group.primary_private_endpoint.id
 }
 
+# Associates the NSGs with the subnets to apply the security rules to the subnets.
 resource "azurerm_subnet_network_security_group_association" "secondary_app" {
   subnet_id                 = azurerm_subnet.secondary_app.id
   network_security_group_id = azurerm_network_security_group.secondary_app.id
 }
 
+# Associates the NSGs with the subnets to apply the security rules to the subnets.
 resource "azurerm_subnet_network_security_group_association" "secondary_private_endpoint" {
   subnet_id                 = azurerm_subnet.secondary_private_endpoint.id
   network_security_group_id = azurerm_network_security_group.secondary_private_endpoint.id
