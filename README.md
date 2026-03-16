@@ -2,7 +2,7 @@
 
 <img src="Website_Screenshot.png" alt="Critical PII Random Quotes Web App Screenshot">
 
-This project provisions and deploys a **public** Python web application in Azure that fetches a random quote from **Azure SQL Database**. The design treats all data as **critical PII**, with network-private service connectivity, encryption controls, managed identities, and cross-region high availability.
+This project provisions and deploys a Python web application in Azure that fetches a random quote from **Azure SQL Database**. The design treats all data as **critical PII**, with a public Azure Front Door edge and private regional service connectivity, encryption controls, managed identities, and cross-region high availability.
 
 ## Demo URL
 
@@ -116,26 +116,28 @@ cp terraform.tfvars.example terraform.tfvars
 # edit terraform.tfvars for names/regions/tags as needed
 ```
 
-Bootstrap tip for public/local runner (temporary):
-- Set `web_app_public_network_access_enabled = true` for zip deployment to App Service.
-- Set `key_vault_public_network_access_enabled = true` and `key_vault_allowed_ip_cidrs = ["<your-public-ip>/32"]`.
-- After testing, lock down by setting `web_app_public_network_access_enabled = false`, `key_vault_public_network_access_enabled = false`, and `key_vault_allowed_ip_cidrs = []`.
-
-3. Initialize and validate Terraform.
+3. Configure the remote Terraform backend.
 
 ```bash
-terraform init
+cp backend.hcl.example backend.hcl
+# edit backend.hcl with your state resource group, storage account, and IDs
+terraform init -backend-config=backend.hcl
+```
+
+4. Validate Terraform.
+
+```bash
 terraform validate
 ```
 
-4. Review and apply.
+5. Review and apply.
 
 ```bash
 terraform plan -out tfplan
 terraform apply tfplan
 ```
 
-5. Approve Front Door private link connections to each web app origin.
+6. Approve Front Door private link connections to each web app origin.
 
 ```bash
 # use values from Terraform outputs
@@ -147,13 +149,13 @@ terraform output secondary_web_app_name
 ../scripts/approve_frontdoor_private_link.sh <resource-group-name> <secondary-web-app-name>
 ```
 
-6. Get the public application URL.
+7. Get the public application URL.
 
 ```bash
 terraform output frontdoor_url
 ```
 
-7. Validate behavior.
+8. Validate behavior.
 
 ```bash
 curl -i "$(terraform output -raw frontdoor_url)/healthz"
