@@ -33,6 +33,10 @@ override.tf.json
 
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
+tfplan
+*.tfplan
+**/tfplan
+**/*.tfplan
 
 # Ignore CLI configuration files
 .terraformrc
@@ -43,6 +47,8 @@ terraform.rc
 
 # Ignore local testing settings
 backend.conf
+backend.hcl
+**/backend.hcl
 *.sample
 
 # VSCode

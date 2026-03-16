@@ -45,7 +45,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = azurerm_resource_group.main.location
   resource_group_name = azurerm_resource_group.main.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30
+  retention_in_days   = var.log_analytics_retention_in_days
   tags                = local.tags
 }
 
@@ -137,6 +137,55 @@ resource "azurerm_subnet" "secondary_private_endpoint" {
   virtual_network_name              = azurerm_virtual_network.secondary.name
   address_prefixes                  = ["10.40.2.0/24"]
   private_endpoint_network_policies = "Enabled"
+}
+
+# Applies NSGs to all subnets so traffic policy is explicit and centrally governable.
+resource "azurerm_network_security_group" "primary_app" {
+  name                = "nsg-p-app-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
+  location            = var.primary_location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = merge(local.tags, { RegionRole = "Primary", SubnetRole = "App" })
+}
+
+resource "azurerm_network_security_group" "primary_private_endpoint" {
+  name                = "nsg-p-pe-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
+  location            = var.primary_location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = merge(local.tags, { RegionRole = "Primary", SubnetRole = "PrivateEndpoint" })
+}
+
+resource "azurerm_network_security_group" "secondary_app" {
+  name                = "nsg-s-app-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
+  location            = var.secondary_location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = merge(local.tags, { RegionRole = "Secondary", SubnetRole = "App" })
+}
+
+resource "azurerm_network_security_group" "secondary_private_endpoint" {
+  name                = "nsg-s-pe-${local.project_slug}-${local.env_slug}-${local.resource_suffix}"
+  location            = var.secondary_location
+  resource_group_name = azurerm_resource_group.main.name
+  tags                = merge(local.tags, { RegionRole = "Secondary", SubnetRole = "PrivateEndpoint" })
+}
+
+resource "azurerm_subnet_network_security_group_association" "primary_app" {
+  subnet_id                 = azurerm_subnet.primary_app.id
+  network_security_group_id = azurerm_network_security_group.primary_app.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "primary_private_endpoint" {
+  subnet_id                 = azurerm_subnet.primary_private_endpoint.id
+  network_security_group_id = azurerm_network_security_group.primary_private_endpoint.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "secondary_app" {
+  subnet_id                 = azurerm_subnet.secondary_app.id
+  network_security_group_id = azurerm_network_security_group.secondary_app.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "secondary_private_endpoint" {
+  subnet_id                 = azurerm_subnet.secondary_private_endpoint.id
+  network_security_group_id = azurerm_network_security_group.secondary_private_endpoint.id
 }
 
 # Peers primary to secondary VNet to enable private cross-region connectivity for dependent services.
@@ -442,6 +491,13 @@ resource "azurerm_mssql_database" "quotes" {
   short_term_retention_policy {
     retention_days = 14
   }
+
+  long_term_retention_policy {
+    weekly_retention  = "P12W"
+    monthly_retention = "P12M"
+    yearly_retention  = "P5Y"
+    week_of_year      = 1
+  }
 }
 
 # Configures SQL failover group to replicate and automatically fail over database connectivity across regions.
@@ -595,7 +651,7 @@ resource "azurerm_linux_web_app" "secondary" {
   service_plan_id               = azurerm_service_plan.secondary.id
   virtual_network_subnet_id     = azurerm_subnet.secondary_app.id
   https_only                    = true
-  public_network_access_enabled = true # Temporary set to true to allow deployment to complete. Change to false for production workloads.
+  public_network_access_enabled = false
   zip_deploy_file               = data.archive_file.app_package.output_path
   tags                          = merge(local.tags, { RegionRole = "Secondary" })
 
@@ -663,6 +719,90 @@ resource "azurerm_key_vault_access_policy" "webapp_secondary" {
   ]
 }
 
+# Enables SQL auditing so security events are captured in Azure Monitor.
+resource "azurerm_mssql_server_extended_auditing_policy" "primary" {
+  server_id              = azurerm_mssql_server.primary.id
+  retention_in_days      = 90
+  log_monitoring_enabled = true
+}
+
+resource "azurerm_mssql_server_extended_auditing_policy" "secondary" {
+  server_id              = azurerm_mssql_server.secondary.id
+  retention_in_days      = 90
+  log_monitoring_enabled = true
+}
+
+# Sends platform/resource diagnostics to Log Analytics for incident response and compliance evidence.
+resource "azurerm_monitor_diagnostic_setting" "key_vault" {
+  name                       = "diag-keyvault"
+  target_resource_id         = azurerm_key_vault.main.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "web_primary" {
+  name                       = "diag-web-primary"
+  target_resource_id         = azurerm_linux_web_app.primary.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "web_secondary" {
+  name                       = "diag-web-secondary"
+  target_resource_id         = azurerm_linux_web_app.secondary.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "sql_primary" {
+  name                       = "diag-sql-primary"
+  target_resource_id         = azurerm_mssql_server.primary.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "sql_secondary" {
+  name                       = "diag-sql-secondary"
+  target_resource_id         = azurerm_mssql_server.secondary.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "sql_database" {
+  name                       = "diag-sql-db"
+  target_resource_id         = azurerm_mssql_database.quotes.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
+resource "azurerm_monitor_diagnostic_setting" "frontdoor_profile" {
+  name                       = "diag-frontdoor"
+  target_resource_id         = azurerm_cdn_frontdoor_profile.main.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+
+  enabled_log {
+    category_group = "allLogs"
+  }
+}
+
 # Creates the Azure Front Door profile to provide global entry, acceleration, and edge security controls.
 resource "azurerm_cdn_frontdoor_profile" "main" {
   name                = local.fd_profile_name
@@ -690,7 +830,7 @@ resource "azurerm_cdn_frontdoor_origin_group" "quotes" {
   }
 
   health_probe {
-    interval_in_seconds = 120
+    interval_in_seconds = 30
     path                = "/healthz"
     protocol            = "Https"
     request_type        = "GET"
@@ -774,14 +914,14 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
     match_condition {
       match_variable     = "RemoteAddr"
       operator           = "IPMatch"
-      match_values       = ["0.0.0.0/0"]
+      match_values       = ["0.0.0.0/0", "::/0"]
       negation_condition = false
     }
   }
 
   managed_rule {
     type    = "DefaultRuleSet"
-    version = "1.0"
+    version = "2.1"
     action  = "Block"
   }
 }

@@ -2,14 +2,12 @@ project_name             = "quotes"
 environment              = "prod"
 primary_location         = "eastus"
 secondary_location       = "westus2"
+log_analytics_retention_in_days = 90
 app_service_plan_sku     = "P1v3"
 app_service_worker_count = 2
-web_app_public_network_access_enabled   = false
 sql_admin_login          = "sqladminquotes"
 sql_database_name        = "quotesdb"
 sql_database_sku         = "BC_Gen5_2"
-key_vault_public_network_access_enabled = false
-key_vault_allowed_ip_cidrs              = []
 
 common_tags = {
   Owner       = "platform-team"

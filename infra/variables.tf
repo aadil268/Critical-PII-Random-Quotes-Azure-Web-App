@@ -22,6 +22,17 @@ variable "secondary_location" {
   default     = "westus2"
 }
 
+variable "log_analytics_retention_in_days" {
+  description = "Log Analytics retention for security/audit evidence."
+  type        = number
+  default     = 90
+
+  validation {
+    condition     = var.log_analytics_retention_in_days >= 90
+    error_message = "For Critical PII workloads, Log Analytics retention must be at least 90 days."
+  }
+}
+
 variable "app_service_plan_sku" {
   description = "SKU for both regional App Service plans."
   type        = string

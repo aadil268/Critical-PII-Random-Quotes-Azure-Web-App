@@ -1,0 +1,7 @@
+resource_group_name  = "<tfstate-resource-group>"
+storage_account_name = "<tfstate-storage-account>"
+container_name       = "tfstate"
+key                  = "critical-pii-random-quotes-prod.tfstate"
+subscription_id      = "<subscription-id>"
+tenant_id            = "<tenant-id>"
+use_azuread_auth     = true
