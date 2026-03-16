@@ -1,3 +1,15 @@
+# Copy this file to backend.conf (gitignored) and fill in your values, then run:
+#   terraform init -backend-config=backend.conf
+#
+# HA requirements for the state storage account (Critical PII workload):
+#   - Replication:        GRS or RA-GRS (geo-redundant) — NOT LRS/ZRS
+#   - Blob versioning:    Enabled (allows state rollback)
+#   - Soft delete:        Enabled, retention >= 90 days
+#   - Container access:   Private (no anonymous blob access)
+#   - Public network:     Disabled; access only via private endpoint or selected VNet
+#   - Azure AD auth:      use_azuread_auth = true (no storage-key credentials)
+#   - Diagnostic setting: Send StorageRead/Write/Delete logs to Log Analytics
+
 resource_group_name  = "<tfstate-resource-group>"
 storage_account_name = "<tfstate-storage-account>"
 container_name       = "tfstate"

@@ -145,6 +145,54 @@ resource "azurerm_network_security_group" "primary_app" {
   location            = var.primary_location
   resource_group_name = azurerm_resource_group.main.name
   tags                = merge(local.tags, { RegionRole = "Primary", SubnetRole = "App" })
+
+  security_rule {
+    name                       = "AllowVnetPrivateEndpointOutbound"
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["443", "1433"]
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAzureMonitorOutbound"
+    priority                   = 110
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "AzureMonitor"
+  }
+
+  security_rule {
+    name                       = "DenyInternetOutbound"
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_network_security_group" "primary_private_endpoint" {
@@ -152,6 +200,54 @@ resource "azurerm_network_security_group" "primary_private_endpoint" {
   location            = var.primary_location
   resource_group_name = azurerm_resource_group.main.name
   tags                = merge(local.tags, { RegionRole = "Primary", SubnetRole = "PrivateEndpoint" })
+
+  security_rule {
+    name                       = "AllowVnetHttpsInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowVnetSqlInbound"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "DenyInternetOutbound"
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
 }
 
 resource "azurerm_network_security_group" "secondary_app" {
@@ -159,6 +255,54 @@ resource "azurerm_network_security_group" "secondary_app" {
   location            = var.secondary_location
   resource_group_name = azurerm_resource_group.main.name
   tags                = merge(local.tags, { RegionRole = "Secondary", SubnetRole = "App" })
+
+  security_rule {
+    name                       = "AllowVnetPrivateEndpointOutbound"
+    priority                   = 100
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["443", "1433"]
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowAzureMonitorOutbound"
+    priority                   = 110
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "AzureMonitor"
+  }
+
+  security_rule {
+    name                       = "DenyInternetOutbound"
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_network_security_group" "secondary_private_endpoint" {
@@ -166,6 +310,54 @@ resource "azurerm_network_security_group" "secondary_private_endpoint" {
   location            = var.secondary_location
   resource_group_name = azurerm_resource_group.main.name
   tags                = merge(local.tags, { RegionRole = "Secondary", SubnetRole = "PrivateEndpoint" })
+
+  security_rule {
+    name                       = "AllowVnetHttpsInbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "443"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "AllowVnetSqlInbound"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "1433"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "DenyAllInbound"
+    priority                   = 4096
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "DenyInternetOutbound"
+    priority                   = 4000
+    direction                  = "Outbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "Internet"
+  }
 }
 
 resource "azurerm_subnet_network_security_group_association" "primary_app" {
@@ -830,7 +1022,7 @@ resource "azurerm_cdn_frontdoor_origin_group" "quotes" {
   }
 
   health_probe {
-    interval_in_seconds = 30
+    interval_in_seconds = 5
     path                = "/healthz"
     protocol            = "Https"
     request_type        = "GET"
@@ -922,6 +1114,12 @@ resource "azurerm_cdn_frontdoor_firewall_policy" "waf" {
   managed_rule {
     type    = "DefaultRuleSet"
     version = "2.1"
+    action  = "Block"
+  }
+
+  managed_rule {
+    type    = "Microsoft_BotManagerRuleSet"
+    version = "1.0"
     action  = "Block"
   }
 }
