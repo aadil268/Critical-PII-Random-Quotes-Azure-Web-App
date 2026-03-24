@@ -4,12 +4,6 @@
 
 This project provisions and deploys a Python web application in Azure that fetches a random quote from **Azure SQL Database**. The design treats all data as **critical PII**, with a public Azure Front Door edge and private regional service connectivity, encryption controls, managed identities, and cross-region high availability.
 
-## Demo URL
-
-1. https://quotes.aadilabbasi.com/
-
-2. https://web-s-quotes-prod-nhxyaq-ejgpaudjhfbxfsff.westus3-01.azurewebsites.net/
-
 ## Critical PII Random Quotes Web App Architecture
 <img src="Critical PII Random Quotes Web App .drawio.png" alt="Critical PII Random Quotes Web App Architecture">
 
